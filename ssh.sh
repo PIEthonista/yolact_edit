@@ -9,3 +9,4 @@ wandb login --relogin 6b305360cd440b1f7432d6f1ba4d81e0c0a60536
 export PATH=$HOME/cmake/bin:$PATH
 export CUDAHOME=/work/HPC_SYS/nvidia/cuda/cuda-10.2
 
+
