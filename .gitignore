@@ -158,3 +158,8 @@ vid/
 vidres/
 
 _.py
+
+# custom
+outputs/
+slurm_txts/
+*.out
