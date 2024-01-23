@@ -671,18 +671,25 @@ class SSDAugmentation(object):
         self.augment = Compose([
             ConvertFromInts(),
             ToAbsoluteCoords(),
-            enable_if(cfg.augment_photometric_distort, PhotometricDistort()),
-            enable_if(cfg.augment_expand, Expand(mean)),
-            enable_if(cfg.augment_random_sample_crop, RandomSampleCrop()),
-            enable_if(cfg.augment_random_mirror, RandomMirror()),
-            enable_if(cfg.augment_random_flip, RandomFlip()),
-            enable_if(cfg.augment_random_flip, RandomRot90()),
+            enable_if(cfg.augment_photometric_distort, PhotometricDistort()),  # True -> from data/config.py, line 417: coco_base_config
+            enable_if(cfg.augment_expand, Expand(mean)),                       # True
+            enable_if(cfg.augment_random_sample_crop, RandomSampleCrop()),     # True
+            enable_if(cfg.augment_random_mirror, RandomMirror()),              # True
+            enable_if(cfg.augment_random_flip, RandomFlip()),                  # False
+            enable_if(cfg.augment_random_flip, RandomRot90()),                 # False
             Resize(),
-            enable_if(not cfg.preserve_aspect_ratio, Pad(cfg.max_size, cfg.max_size, mean)),
+            enable_if(not cfg.preserve_aspect_ratio, Pad(cfg.max_size, cfg.max_size, mean)),  # False, 550, 550, (103.94, 116.78, 123.68)   <- in BGR for ImageNet
             ToPercentCoords(),
-            PrepareMasks(cfg.mask_size, cfg.use_gt_bboxes),
-            BackboneTransform(cfg.backbone.transform, mean, std, 'BGR')
+            PrepareMasks(cfg.mask_size, cfg.use_gt_bboxes),                    # 16, False
+            BackboneTransform(cfg.backbone.transform, mean, std, 'BGR')        # resnet_transform, (103.94, 116.78, 123.68), (57.38, 57.12, 58.40), "BGR"
         ])
+    
+            # resnet_transform = Config({
+            #     'channel_order': 'RGB',
+            #     'normalize': True,
+            #     'subtract_means': False,
+            #     'to_float': False,
+            # })
 
     def __call__(self, img, masks, boxes, labels):
         return self.augment(img, masks, boxes, labels)
