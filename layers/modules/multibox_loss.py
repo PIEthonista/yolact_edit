@@ -94,9 +94,12 @@ class MultiBoxLoss(nn.Module):
             print(f"score_data: {score_data.size()}   {score_data.mean().item()}   {score_data.min().item()}   {score_data.max().item()}")
         if inst_data is not None:
             print(f"inst_data: {inst_data.size()}   {inst_data.mean().item()}   {inst_data.min().item()}   {inst_data.max().item()}")
-        print(f"targets: {targets.size()}   {targets.mean().item()}   {targets.min()}   {targets.max()}")
-        print(f"masks: {masks.size()}   {masks.mean().item()}   {masks.min()}   {masks.max()}")
-        print(f"num_crowds: {num_crowds.size()}   {num_crowds.mean().item()}   {num_crowds.min()}   {num_crowds.max()}")
+        print(f"targets: {targets}")
+        print(f"masks: {masks}")
+        print(f"num_crowds: {num_crowds}")
+        # print(f"targets: {len(targets[0])}/{len(targets)}   {sum(targets[0])/len(targets[0])}   {min(targets[0])}   {max(targets[0])}")
+        # print(f"masks: {masks.size()}   {masks.mean().item()}   {masks.min()}   {masks.max()}")
+        # print(f"num_crowds: {num_crowds.size()}   {num_crowds.mean().item()}   {num_crowds.min()}   {num_crowds.max()}")
         print("==========")
         
         # ===================================================================
