@@ -80,6 +80,27 @@ class MultiBoxLoss(nn.Module):
 
         score_data = predictions['score'] if cfg.use_mask_scoring   else None   
         inst_data  = predictions['inst']  if cfg.use_instance_coeff else None
+
+        
+        # ===================================================================
+        print("==========")
+        print(f"loc_data:  {loc_data.size()}   {loc_data.mean().item()}   {loc_data.min().item()}   {loc_data.max().item()}")
+        print(f"conf_data: {conf_data.size()}   {conf_data.mean().item()}   {conf_data.min().item()}   {conf_data.max().item()}")
+        print(f"mask_data: {mask_data.size()}   {mask_data.mean().item()}   {mask_data.min().item()}   {mask_data.max().item()}")
+        print(f"priors: {priors.size()}   {priors.mean().item()}   {priors.min().item()}   {priors.max().item()}")
+        if cfg.mask_type == mask_type.lincomb:
+            print(f"proto_data: {proto_data.size()}   {proto_data.mean().item()}   {proto_data.min().item()}   {proto_data.max().item()}")
+        if score_data is not None:
+            print(f"score_data: {score_data.size()}   {score_data.mean().item()}   {score_data.min().item()}   {score_data.max().item()}")
+        if inst_data is not None:
+            print(f"inst_data: {inst_data.size()}   {inst_data.mean().item()}   {inst_data.min().item()}   {inst_data.max().item()}")
+        print(f"targets: {targets.size()}   {targets.mean().item()}   {targets.min()}   {targets.max()}")
+        print(f"masks: {masks.size()}   {masks.mean().item()}   {masks.min()}   {masks.max()}")
+        print(f"num_crowds: {num_crowds.size()}   {num_crowds.mean().item()}   {num_crowds.min()}   {num_crowds.max()}")
+        print("==========")
+        
+        # ===================================================================
+
         
         labels = [None] * len(targets) # Used in sem segm loss
 
