@@ -153,14 +153,13 @@ scripts/aws3/
 data/config_dev.py
 data/coco/
 data/sbd/
-data/view_neti_RT
-
 vid/
 vidres/
 
 _.py
 
 # custom
+data/view_neti_RT
 outputs/
 slurm_txts/
 *.out
