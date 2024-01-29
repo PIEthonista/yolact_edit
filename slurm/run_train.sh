@@ -11,6 +11,7 @@
 
 # throw outputs into outputs/
 
+# 565739
 # Trains using the base config with a batch size of 8 (the default).
 python train.py --config=yolact_base_config
 

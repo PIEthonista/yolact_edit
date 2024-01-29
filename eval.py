@@ -120,6 +120,11 @@ def parse_args(argv=None):
 
     global args
     args = parser.parse_args(argv)
+    
+    if args.images is not None:
+        output_dir = args.images.split(":")[-1]
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
     if args.output_web_json:
         args.output_coco_json = True

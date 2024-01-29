@@ -40,6 +40,11 @@ class COCOAnnotationTransform(object):
                 label_idx = obj['category_id']
                 if label_idx >= 0:
                     label_idx = self.label_map[label_idx] - 1
+                    # #### yixian remove coco classes other than vehicles
+                    # try:
+                    #     label_idx = self.label_map[label_idx] - 1
+                    # except:
+                    #     label_idx = -1
                 final_box = list(np.array([bbox[0], bbox[1], bbox[0]+bbox[2], bbox[1]+bbox[3]])/scale)
                 final_box.append(label_idx)
                 res += [final_box]  # [xmin, ymin, xmax, ymax, label_idx]
@@ -82,6 +87,9 @@ class COCODetection(data.Dataset):
         
         self.name = dataset_name
         self.has_gt = has_gt
+        
+        #### yixian
+        self.label_map = get_label_map()
 
     def __getitem__(self, index):
         """
@@ -106,15 +114,37 @@ class COCODetection(data.Dataset):
                    target is the object returned by ``coco.loadAnns``.
             Note that if no crowd annotations exist, crowd will be None
         """
-        img_id = self.ids[index]
+        
+        
+        target = []
+        
+        # img_id = self.ids[index]
+        # if self.has_gt:
+        #     ann_ids = self.coco.getAnnIds(imgIds=img_id)
 
-        if self.has_gt:
-            ann_ids = self.coco.getAnnIds(imgIds=img_id)
+        #     # Target has {'segmentation', 'area', iscrowd', 'image_id', 'bbox', 'category_id'}
+        #     # target = [x for x in self.coco.loadAnns(ann_ids) if x['image_id'] == img_id]
+        #     #### yixian
+        #     target = [x for x in self.coco.loadAnns(ann_ids) if x['image_id'] == img_id]
+        # else:
+        #     target = []
+        
+        #### yixian loop till get target else original code will blow
+        while len(target) <= 0:
+            img_id = self.ids[index]
+            if self.has_gt:
+                ann_ids = self.coco.getAnnIds(imgIds=img_id)
 
-            # Target has {'segmentation', 'area', iscrowd', 'image_id', 'bbox', 'category_id'}
-            target = [x for x in self.coco.loadAnns(ann_ids) if x['image_id'] == img_id]
-        else:
-            target = []
+                # Target has {'segmentation', 'area', iscrowd', 'image_id', 'bbox', 'category_id'}
+                # target = [x for x in self.coco.loadAnns(ann_ids) if x['image_id'] == img_id]
+                #### yixian
+                target = [x for x in self.coco.loadAnns(ann_ids) if x['image_id'] == img_id and x['category_id'] in self.label_map.keys()]
+                print("---- target", target)
+            else:
+                target = []
+            
+            if len(target) <= 0:
+                index = random.randint(0, self.__len__() - 1)
 
         # Separate out crowd annotations. These are annotations that signify a large crowd of
         # objects of said class, where there is no annotation for each individual object. Both

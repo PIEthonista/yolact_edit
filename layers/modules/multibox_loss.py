@@ -83,24 +83,24 @@ class MultiBoxLoss(nn.Module):
 
         
         # ===================================================================
-        print("==========")
-        print(f"loc_data:  {loc_data.size()}   {loc_data.mean().item()}   {loc_data.min().item()}   {loc_data.max().item()}")
-        print(f"conf_data: {conf_data.size()}   {conf_data.mean().item()}   {conf_data.min().item()}   {conf_data.max().item()}")
-        print(f"mask_data: {mask_data.size()}   {mask_data.mean().item()}   {mask_data.min().item()}   {mask_data.max().item()}")
-        print(f"priors: {priors.size()}   {priors.mean().item()}   {priors.min().item()}   {priors.max().item()}")
-        if cfg.mask_type == mask_type.lincomb:
-            print(f"proto_data: {proto_data.size()}   {proto_data.mean().item()}   {proto_data.min().item()}   {proto_data.max().item()}")
-        if score_data is not None:
-            print(f"score_data: {score_data.size()}   {score_data.mean().item()}   {score_data.min().item()}   {score_data.max().item()}")
-        if inst_data is not None:
-            print(f"inst_data: {inst_data.size()}   {inst_data.mean().item()}   {inst_data.min().item()}   {inst_data.max().item()}")
-        print(f"targets: {targets}")
-        print(f"masks: {masks}")
-        print(f"num_crowds: {num_crowds}")
-        # print(f"targets: {len(targets[0])}/{len(targets)}   {sum(targets[0])/len(targets[0])}   {min(targets[0])}   {max(targets[0])}")
-        # print(f"masks: {masks.size()}   {masks.mean().item()}   {masks.min()}   {masks.max()}")
-        # print(f"num_crowds: {num_crowds.size()}   {num_crowds.mean().item()}   {num_crowds.min()}   {num_crowds.max()}")
-        print("==========")
+        # print("==========")
+        # print(f"loc_data:  {loc_data.size()}   {loc_data.mean().item()}   {loc_data.min().item()}   {loc_data.max().item()}")
+        # print(f"conf_data: {conf_data.size()}   {conf_data.mean().item()}   {conf_data.min().item()}   {conf_data.max().item()}")
+        # print(f"mask_data: {mask_data.size()}   {mask_data.mean().item()}   {mask_data.min().item()}   {mask_data.max().item()}")
+        # print(f"priors: {priors.size()}   {priors.mean().item()}   {priors.min().item()}   {priors.max().item()}")
+        # if cfg.mask_type == mask_type.lincomb:
+        #     print(f"proto_data: {proto_data.size()}   {proto_data.mean().item()}   {proto_data.min().item()}   {proto_data.max().item()}")
+        # if score_data is not None:
+        #     print(f"score_data: {score_data.size()}   {score_data.mean().item()}   {score_data.min().item()}   {score_data.max().item()}")
+        # if inst_data is not None:
+        #     print(f"inst_data: {inst_data.size()}   {inst_data.mean().item()}   {inst_data.min().item()}   {inst_data.max().item()}")
+        # print(f"targets: {targets}")
+        # print(f"masks: {masks}")
+        # print(f"num_crowds: {num_crowds}")
+        # # print(f"targets: {len(targets[0])}/{len(targets)}   {sum(targets[0])/len(targets[0])}   {min(targets[0])}   {max(targets[0])}")
+        # # print(f"masks: {masks.size()}   {masks.mean().item()}   {masks.min()}   {masks.max()}")
+        # # print(f"num_crowds: {num_crowds.size()}   {num_crowds.mean().item()}   {num_crowds.min()}   {num_crowds.max()}")
+        # print("==========")
         
         # ===================================================================
 
@@ -256,6 +256,9 @@ class MultiBoxLoss(nn.Module):
                 # Construct Semantic Segmentation
                 segment_t = torch.zeros_like(cur_segment, requires_grad=False)
                 for obj_idx in range(downsampled_masks.size(0)):
+                    print("---- obj_idx", obj_idx)
+                    print("---- cur_class_t", cur_class_t)
+                    print("---- segment_t", segment_t)
                     segment_t[cur_class_t[obj_idx]] = torch.max(segment_t[cur_class_t[obj_idx]], downsampled_masks[obj_idx])
             
             loss_s += F.binary_cross_entropy_with_logits(cur_segment, segment_t, reduction='sum')
