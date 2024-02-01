@@ -563,7 +563,13 @@ class Yolact(nn.Module):
     
     def forward(self, x):
         """ The input should be of size [batch_size, 3, img_h, img_w] """
+        print("---- len(x)", len(x))
+        print("---- x", x)
+        
+        # TODO: change this
         _, _, img_h, img_w = x.size()
+        # _, img_h, img_w = x[0].size()
+        
         cfg._tmp_img_h = img_h
         cfg._tmp_img_w = img_w
         

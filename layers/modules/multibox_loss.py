@@ -80,27 +80,29 @@ class MultiBoxLoss(nn.Module):
 
         score_data = predictions['score'] if cfg.use_mask_scoring   else None   
         inst_data  = predictions['inst']  if cfg.use_instance_coeff else None
+        
+        # print("---- predictions", predictions)
 
         
         # ===================================================================
-        print("==========")
-        print(f"loc_data:  {loc_data.size()}   {loc_data.mean().item()}   {loc_data.min().item()}   {loc_data.max().item()}")
-        print(f"conf_data: {conf_data.size()}   {conf_data.mean().item()}   {conf_data.min().item()}   {conf_data.max().item()}")
-        print(f"mask_data: {mask_data.size()}   {mask_data.mean().item()}   {mask_data.min().item()}   {mask_data.max().item()}")
-        print(f"priors: {priors.size()}   {priors.mean().item()}   {priors.min().item()}   {priors.max().item()}")
-        if cfg.mask_type == mask_type.lincomb:
-            print(f"proto_data: {proto_data.size()}   {proto_data.mean().item()}   {proto_data.min().item()}   {proto_data.max().item()}")
-        if score_data is not None:
-            print(f"score_data: {score_data.size()}   {score_data.mean().item()}   {score_data.min().item()}   {score_data.max().item()}")
-        if inst_data is not None:
-            print(f"inst_data: {inst_data.size()}   {inst_data.mean().item()}   {inst_data.min().item()}   {inst_data.max().item()}")
-        print(f"targets: {targets}")
-        print(f"masks: {masks}")
-        print(f"num_crowds: {num_crowds}")
-        # print(f"targets: {len(targets[0])}/{len(targets)}   {sum(targets[0])/len(targets[0])}   {min(targets[0])}   {max(targets[0])}")
-        # print(f"masks: {masks.size()}   {masks.mean().item()}   {masks.min()}   {masks.max()}")
-        # print(f"num_crowds: {num_crowds.size()}   {num_crowds.mean().item()}   {num_crowds.min()}   {num_crowds.max()}")
-        print("==========")
+        # print("==========")
+        # print(f"loc_data:  {loc_data.size()}   {loc_data.mean().item()}   {loc_data.min().item()}   {loc_data.max().item()}")
+        # print(f"conf_data: {conf_data.size()}   {conf_data.mean().item()}   {conf_data.min().item()}   {conf_data.max().item()}")
+        # print(f"mask_data: {mask_data.size()}   {mask_data.mean().item()}   {mask_data.min().item()}   {mask_data.max().item()}")
+        # print(f"priors: {priors.size()}   {priors.mean().item()}   {priors.min().item()}   {priors.max().item()}")
+        # if cfg.mask_type == mask_type.lincomb:
+        #     print(f"proto_data: {proto_data.size()}   {proto_data.mean().item()}   {proto_data.min().item()}   {proto_data.max().item()}")
+        # if score_data is not None:
+        #     print(f"score_data: {score_data.size()}   {score_data.mean().item()}   {score_data.min().item()}   {score_data.max().item()}")
+        # if inst_data is not None:
+        #     print(f"inst_data: {inst_data.size()}   {inst_data.mean().item()}   {inst_data.min().item()}   {inst_data.max().item()}")
+        # print(f"targets: {targets}")
+        # print(f"masks: {masks}")
+        # print(f"num_crowds: {num_crowds}")
+        # # print(f"targets: {len(targets[0])}/{len(targets)}   {sum(targets[0])/len(targets[0])}   {min(targets[0])}   {max(targets[0])}")
+        # # print(f"masks: {masks.size()}   {masks.mean().item()}   {masks.min()}   {masks.max()}")
+        # # print(f"num_crowds: {num_crowds.size()}   {num_crowds.mean().item()}   {num_crowds.min()}   {num_crowds.max()}")
+        # print("==========")
         
         # ===================================================================
 
@@ -123,7 +125,12 @@ class MultiBoxLoss(nn.Module):
 
         for idx in range(batch_size):
             truths      = targets[idx][:, :-1].data
+            # TODO: look into why need convert to .long()
+            # print("---- targets[idx][:, -1].data     ", targets[idx][:, -1].data)
+            # print("---- targets[idx][:, -1].data.long", targets[idx][:, -1].data.long())
             labels[idx] = targets[idx][:, -1].data.long()
+            print("---- long confimation             ", labels)
+            # labels[idx] = targets[idx][:, -1].data
 
             if cfg.use_class_existence_loss:
                 # Construct a one-hot vector for each object and collapse it into an existence vector with max
@@ -141,24 +148,36 @@ class MultiBoxLoss(nn.Module):
                 _, masks[idx]  = split(masks[idx])
             else:
                 crowd_boxes = None
-
+            
+            print("---- labels before match()", labels)
             
             match(self.pos_threshold, self.neg_threshold,
                   truths, priors.data, labels[idx], crowd_boxes,
                   loc_t, conf_t, idx_t, idx, loc_data[idx])
                   
             gt_box_t[idx, :, :] = truths[idx_t[idx]]
+            
+            print("---- labels after match() ", labels)
+        
+        
+        labels_for_segmentation_loss = [tensor.clone().detach().requires_grad_(False) for tensor in labels]
 
         # wrap targets
         loc_t = Variable(loc_t, requires_grad=False)
         conf_t = Variable(conf_t, requires_grad=False)
         idx_t = Variable(idx_t, requires_grad=False)
+        
+        print("----labels_for_segmentation_loss 0",labels_for_segmentation_loss)
+        
 
         pos = conf_t > 0
         num_pos = pos.sum(dim=1, keepdim=True)
         
         # Shape: [batch,num_priors,4]
         pos_idx = pos.unsqueeze(pos.dim()).expand_as(loc_data)
+        
+        print("----labels_for_segmentation_loss 1",labels_for_segmentation_loss)
+        
         
         losses = {}
 
@@ -167,7 +186,9 @@ class MultiBoxLoss(nn.Module):
             loc_p = loc_data[pos_idx].view(-1, 4)
             loc_t = loc_t[pos_idx].view(-1, 4)
             losses['B'] = F.smooth_l1_loss(loc_p, loc_t, reduction='sum') * cfg.bbox_alpha
-
+        
+        print("----labels_for_segmentation_loss 2",labels_for_segmentation_loss)
+        
         if cfg.train_masks:
             if cfg.mask_type == mask_type.direct:
                 if cfg.use_gt_bboxes:
@@ -192,30 +213,45 @@ class MultiBoxLoss(nn.Module):
                         losses['P'] = torch.mean(torch.abs(proto_data)) / self.l1_expected_area * self.l1_alpha
                     elif cfg.mask_proto_loss == 'disj':
                         losses['P'] = -torch.mean(torch.max(F.log_softmax(proto_data, dim=-1), dim=-1)[0])
-
+        
+        print("----labels_for_segmentation_loss 3",labels_for_segmentation_loss)
+        
+        
         # Confidence loss
         if cfg.use_focal_loss:
             if cfg.use_sigmoid_focal_loss:
                 losses['C'] = self.focal_conf_sigmoid_loss(conf_data, conf_t)
+                print("C1")
             elif cfg.use_objectness_score:
                 losses['C'] = self.focal_conf_objectness_loss(conf_data, conf_t)
+                print("C2")
             else:
                 losses['C'] = self.focal_conf_loss(conf_data, conf_t)
+                print("C3")
         else:
             if cfg.use_objectness_score:
                 losses['C'] = self.conf_objectness_loss(conf_data, conf_t, batch_size, loc_p, loc_t, priors)
+                print("C4")
             else:
-                losses['C'] = self.ohem_conf_loss(conf_data, conf_t, pos, batch_size)
-
+                # losses['C'] = self.ohem_conf_loss(conf_data, conf_t, pos, batch_size)
+                print("C5")       # NOTE: only this one runs
+        
+        print("----labels_for_segmentation_loss 4",labels_for_segmentation_loss)  # NOTE: changes here
+        
+        
         # Mask IoU Loss
         if cfg.use_maskiou and maskiou_targets is not None:
             losses['I'] = self.mask_iou_loss(net, maskiou_targets)
+            print("I1")
 
         # These losses also don't depend on anchors
         if cfg.use_class_existence_loss:
             losses['E'] = self.class_existence_loss(predictions['classes'], class_existence_t)
+            print("E1")
         if cfg.use_semantic_segmentation_loss:
-            losses['S'] = self.semantic_segmentation_loss(predictions['segm'], masks, labels)
+            # print("---- predictions['segm']", predictions['segm'])
+            print("----labels_for_segmentation_loss 5",labels_for_segmentation_loss)    # NOTE: changes here
+            losses['S'] = self.semantic_segmentation_loss(predictions['segm'], masks, labels_for_segmentation_loss)
 
         # Divide all losses by the number of positives.
         # Don't do it for loss[P] because that doesn't depend on the anchors.
@@ -245,6 +281,9 @@ class MultiBoxLoss(nn.Module):
         loss_s = 0
         
         for idx in range(batch_size):
+            # print("---- segment_data", segment_data)
+            # print("---- segment_data[idx]", segment_data[idx])
+            
             cur_segment = segment_data[idx]
             cur_class_t = class_t[idx]
 
@@ -254,11 +293,12 @@ class MultiBoxLoss(nn.Module):
                 downsampled_masks = downsampled_masks.gt(0.5).float()
                 
                 # Construct Semantic Segmentation
+                # print("----cur_segment", cur_segment)
                 segment_t = torch.zeros_like(cur_segment, requires_grad=False)
                 for obj_idx in range(downsampled_masks.size(0)):
-                    print("---- obj_idx", obj_idx)
-                    print("---- cur_class_t", cur_class_t)
-                    print("---- segment_t", segment_t)
+                    # print("---- obj_idx", obj_idx)
+                    # print("---- cur_class_t", cur_class_t)
+                    # print("---- segment_t", segment_t)
                     segment_t[cur_class_t[obj_idx]] = torch.max(segment_t[cur_class_t[obj_idx]], downsampled_masks[obj_idx])
             
             loss_s += F.binary_cross_entropy_with_logits(cur_segment, segment_t, reduction='sum')

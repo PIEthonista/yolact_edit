@@ -90,7 +90,7 @@ class COCODetection(data.Dataset):
         
         #### yixian
         self.label_map = get_label_map()
-
+        
     def __getitem__(self, index):
         """
         Args:
@@ -100,6 +100,7 @@ class COCODetection(data.Dataset):
                    target is the object returned by ``coco.loadAnns``.
         """
         im, gt, masks, h, w, num_crowds = self.pull_item(index)
+        # print("---- coco.getitem")
         return im, (gt, masks, num_crowds)
 
     def __len__(self):
@@ -139,12 +140,15 @@ class COCODetection(data.Dataset):
                 # target = [x for x in self.coco.loadAnns(ann_ids) if x['image_id'] == img_id]
                 #### yixian
                 target = [x for x in self.coco.loadAnns(ann_ids) if x['image_id'] == img_id and x['category_id'] in self.label_map.keys()]
-                print("---- target", target)
+                # print("---- target", target)
             else:
                 target = []
             
             if len(target) <= 0:
                 index = random.randint(0, self.__len__() - 1)
+        
+        print("---- target", target)
+        
 
         # Separate out crowd annotations. These are annotations that signify a large crowd of
         # objects of said class, where there is no annotation for each individual object. Both
@@ -187,6 +191,7 @@ class COCODetection(data.Dataset):
                 target = np.array(target)
                 img, masks, boxes, labels = self.transform(img, masks, target[:, :4],
                     {'num_crowds': num_crowds, 'labels': target[:, 4]})
+                print("---- labels", labels)
             
                 # I stored num_crowds in labels so I didn't have to modify the entirety of augmentations
                 num_crowds = labels['num_crowds']
@@ -218,6 +223,7 @@ class COCODetection(data.Dataset):
         '''
         img_id = self.ids[index]
         path = self.coco.loadImgs(img_id)[0]['file_name']
+        # print("---- coco.pull_image")
         return cv2.imread(osp.join(self.root, path), cv2.IMREAD_COLOR)
 
     def pull_anno(self, index):
@@ -234,6 +240,7 @@ class COCODetection(data.Dataset):
         '''
         img_id = self.ids[index]
         ann_ids = self.coco.getAnnIds(imgIds=img_id)
+        # print("---- coco.pull_anno")
         return self.coco.loadAnns(ann_ids)
 
     def __repr__(self):
@@ -244,6 +251,7 @@ class COCODetection(data.Dataset):
         fmt_str += '{0}{1}\n'.format(tmp, self.transform.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
         tmp = '    Target Transforms (if any): '
         fmt_str += '{0}{1}'.format(tmp, self.target_transform.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
+        # print("---- coco.__repr__")
         return fmt_str
 
 def enforce_size(img, targets, masks, num_crowds, new_w, new_h):

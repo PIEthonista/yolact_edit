@@ -225,7 +225,10 @@ def train():
             print('Error: Batch allocation (%s) does not sum to batch size (%s).' % (args.batch_alloc, args.batch_size))
             exit(-1)
 
+    # TODO: undo this
     net = CustomDataParallel(NetLoss(net, criterion))
+    # net = NetLoss(net, criterion)
+    
     if args.cuda:
         net = net.cuda()
     
@@ -308,6 +311,9 @@ def train():
 
                 # Forward Pass + Compute loss at the same time (see CustomDataParallel and NetLoss)
                 losses = net(datum)
+                # TODO: undo this
+                # im, (gt, masks, num_crowds) = datum
+                # losses = net(im, gt, masks, num_crowds)
                 
                 losses = { k: (v).mean() for k,v in losses.items() } # Mean here because Dataparallel
                 loss = sum([losses[k] for k in losses])
